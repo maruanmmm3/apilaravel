@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Fichero;
 
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+
 class FicheroController extends Controller
 {
     /**
@@ -36,33 +39,21 @@ class FicheroController extends Controller
      */
     public function store(Request $request)
     {
-        
+        $request->validate([
+            'url' => 'required|max:100',
+            'url.*' => 'reqired|max:500000'
+        ]); 
 
-        if ($request->hasFile('file')){ //Si en el reques hay un archivo
-            $fichero = new Fichero();
-            $file = $request->file('file');
-            $filename = $file->getClientOriginalName(); //Obtener el Nombre original
+        $archivos = $request->file('url')->store('public/articles');
 
-            $filename = pathinfo($filename, PATHINFO_FILENAME);//OBTENER EL NOMBRE SIN LA EXTENCION
-            $name_file = str_replace(" ","_", $filename);//Remplazar todo espacio con un "_"
+        $url = Storage::url($archivos);
 
-            $extension = $file->getClientOriginalExtension();//Obtener la extencion del archivo
+        Fichero::create([
+            'url' => $url
+        ]);
 
-            $nombrealter = date('His') . '-' . $name_file . '.' . $extension; //Concatenear FECHA + GION + NOMBREESPACIOS + . + LA EXTENCION
-            $file->move(public_path('files/'), $nombrealter); //Mover el archivo a public-files
-
-            $fichero->url = $nombrealter;
-            $fichero->save();
-            
-
-        } else{
-
-            return response()->json(["mensaje" => "Error"]);
-        }
-        
-        /* $fichero->url = $request->url; */
-
-        
+        return response()->json($url); 
+   
     }
 
     /**
@@ -105,10 +96,40 @@ class FicheroController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request)
+    public function destroy(Fichero $fichero)
     {
-        $fichero = Fichero::destroy($request->id);
-        /* Storage::disk('public')->delete('URL'.$request.url()); */
+        $ruta = str_replace('/storage', 'public', $fichero->url);
+        Storage::delete($ruta);
+
+        $fichero->delete();
+
+        
         return $fichero;
+    }
+
+    public function multi(Request $request)
+    {
+        /* $request->validate([
+            'file' => 'required|max:2000'
+        ]); */
+
+        $archivos = $request->file();
+        $urls = array();
+
+        foreach ($archivos as $archivo){
+
+        $url_archivo=$archivo->store('public/articles');
+
+        $url = Storage::url($url_archivo);
+        $urls[] = $url;
+        Fichero::create([
+            'url' => $url
+        ]);
+
+        }
+
+
+        return response()->json($urls); 
+        
     }
 }

@@ -19,13 +19,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-/* Route::post('subirFile', 'Api/SubirController@subirFile'); */
 
-/* Route::post('subirFile', [SubirController::class, 'subirFile']); */
-
-/* Route::post('cursos', [CursoController::class, 'store'])->name('cursos.store') */
 Route::get('/ficheros', 'App\Http\Controllers\FicheroController@index');//Mostrar ficheros
 Route::post('/ficheros', 'App\Http\Controllers\FicheroController@store');//Crear Fichero
-Route::delete('/ficheros/{id}', 'App\Http\Controllers\FicheroController@destroy');//Eliminar fichero
-
+Route::delete('/ficheros/{fichero}', 'App\Http\Controllers\FicheroController@destroy');//Eliminar fichero
+Route::post('/ficherosmulti', 'App\Http\Controllers\FicheroController@multi');//Agregar Multi archivos
 
